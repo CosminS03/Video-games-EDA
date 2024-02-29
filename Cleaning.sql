@@ -68,3 +68,11 @@ FROM Video_Games_Staging;
 
 --Dropping the staging table
 DROP TABLE Video_Games_Staging;
+
+
+--Checking every feature for null values
+SELECT * FROM Video_Games
+WHERE game_name IS NULL;
+--The rows with missing names of the games will have to be deleted
+DELETE FROM Video_Games
+WHERE game_name IS NULL;
