@@ -69,10 +69,81 @@ FROM Video_Games_Staging;
 --Dropping the staging table
 DROP TABLE Video_Games_Staging;
 
-
 --Checking every feature for null values
 SELECT * FROM Video_Games
 WHERE game_name IS NULL;
 --The rows with missing names of the games will have to be deleted
 DELETE FROM Video_Games
 WHERE game_name IS NULL;
+/*
+In this dataset there are rows which depict a certain game but with added details about their sales
+written in between two parenthesis at the end of the name(examples: weekly sales, US sales, old sales)
+Rows which contain weekly sales will be deleted so that the consistency of the data is maintained
+*/
+DELETE FROM Video_Games
+WHERE game_name LIKE '%eekly%';
+/*
+Rows which contain old sales will also be deleted because rows with updated sales of the same game
+exist
+*/
+DELETE FROM Video_Games
+WHERE game_name LIKE '%(old%'
+OR game_name LIKE '%(Old%';
+/*
+Rows which specify that the sales are from all the regions will have the additional info deleted from 
+their name, so that it remains only the name of the game.
+*/
+UPDATE Video_Games
+SET game_name = SUBSTRING(game_name FROM 1 FOR POSITION('(' IN game_name) - 1)
+WHERE game_name LIKE '%(_ll _egion_%';
+/*
+The rows which depict only sales from a certain region for a game while that game has a separate row
+for all of its sales will be deleted
+*/
+DELETE FROM Video_Games
+WHERE game_name IN(
+	SELECT t2.game_name FROM (
+		SELECT game_name, platform FROM Video_Games
+		WHERE game_name NOT LIKE '%(%'
+	) AS t1
+	INNER JOIN (
+		SELECT game_name, platform FROM Video_Games
+		WHERE RIGHT(game_name, 6) = 'sales)'
+	) AS t2
+	ON t1.platform = t2.platform
+	AND t1.game_name = TRIM(SUBSTRING(t2.game_name FROM 1 FOR POSITION('(' IN t2.game_name)-1))
+);
+/*
+The sales of some games are divided into more rows based on their region. These rows will have all of
+their sales added up then deleted so that remains only one row for a game
+*/
+UPDATE Video_Games AS t1
+SET na_sales = t1.na_sales + t2.na_sales,
+eu_sales = t1.eu_sales + t2.eu_sales,
+jp_sales = t1.jp_sales + t2.jp_sales,
+other_sales = t1.other_sales + t2.other_sales,
+global_sales = t1.global_sales + t2.global_sales,
+game_name = TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1))
+FROM Video_Games AS t2
+WHERE RIGHT(t1.game_name, 6) = 'sales)'
+AND RIGHT(t2.game_name, 6) = 'sales)'
+AND TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1)) = 
+TRIM(SUBSTRING(t2.game_name FROM 1 FOR POSITION('(' IN t2.game_name) - 1))
+AND t1.game_name <> t2.game_name;
+
+DELETE FROM Video_Games
+WHERE CTID IN (
+	SELECT CTID FROM(
+		SELECT *,
+		ROW_NUMBER() OVER(PARTITION BY game_name, platform) AS rn,
+		CTID
+		FROM Video_Games) X
+	WHERE X.rn > 1
+);
+
+/*
+There still are rows with sales from certain regions which don't have other rows to complete their
+information, so they will be deleted
+*/
+DELETE FROM Video_Games
+WHERE RIGHT(game_name, 6) = 'sales)';
