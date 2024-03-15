@@ -69,6 +69,7 @@ FROM Video_Games_Staging;
 --Dropping the staging table
 DROP TABLE Video_Games_Staging;
 
+
 --Checking every feature for null values
 SELECT * FROM Video_Games
 WHERE game_name IS NULL;
@@ -147,3 +148,73 @@ information, so they will be deleted
 */
 DELETE FROM Video_Games
 WHERE RIGHT(game_name, 6) = 'sales)';
+
+
+SELECT * FROM Video_Games
+WHERE platform IS NULL;
+--There are no null values for platform
+
+
+SELECT * FROM Video_Games
+WHERE year_of_release IS NULL;
+/*
+The rows with games that have missing years of release will be filled with the years from rows of the
+same game but on different platforms
+*/
+UPDATE Video_Games AS t1
+SET year_of_release = t2.year_of_release
+FROM (
+	SELECT * FROM Video_Games
+	WHERE year_of_release IS NOT NULL
+) AS t2
+WHERE t1.game_name = t2.game_name;
+/*
+Some games have their year of release at the end of their names, so the years will be filled in from
+their names
+*/
+UPDATE Video_Games
+SET year_of_release = RIGHT(game_name,4)::INTEGER
+WHERE RIGHT(game_name, 4) LIKE '20%'
+AND year_of_release IS NULL;
+/*
+The rest of the missing values will be calculated by making the average of the release years of the 
+next and previous games in the series of the one with null value. The way in which wether the game in
+question is in a series is by ordering the whole dataset by game name and checking wether the game 
+before and after starts with the same words.
+*/
+WITH sorted_data AS 
+(
+	SELECT *, 
+	LAG(game_name) OVER (ORDER BY game_name) AS prev_game,
+	LEAD(game_name) OVER (ORDER BY game_name) AS next_game,
+	CAST(AVG(CASE WHEN year_of_release IS NOT NULL THEN year_of_release ELSE NULL END)
+	OVER (ORDER BY game_name ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS INTEGER) AS avg_release_year
+  	FROM Video_Games
+)
+UPDATE Video_Games AS t1
+SET year_of_release =  
+(
+	SELECT avg_release_year FROM sorted_data
+	WHERE TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION(' ' IN t1.game_name))) = 
+	TRIM(SUBSTRING(prev_game FROM 1 FOR POSITION(' ' IN prev_game)))
+	AND TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION(' ' IN t1.game_name))) = 
+	TRIM(SUBSTRING(next_game FROM 1 FOR POSITION(' ' IN next_game)))
+	LIMIT 1
+)
+WHERE year_of_release IS NULL;
+/*
+The rest of the missing years of release will be replaced with the average year of release of the
+platform that it appeared on
+*/
+
+WITH platform_avg_years AS
+(
+	SELECT platform, 
+	CAST(AVG(year_of_release) AS INTEGER) AS avg_year FROM Video_Games
+	GROUP BY platform
+)
+UPDATE Video_Games AS t1
+SET year_of_release = avg_year
+FROM platform_avg_years AS t2
+WHERE t1.platform = t2.platform
+AND year_of_release IS NULL;
