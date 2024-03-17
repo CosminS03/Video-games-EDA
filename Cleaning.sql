@@ -245,4 +245,88 @@ The genre, publisher, NA, EU, JP, Other and Global sales have no null values
 
 
 SELECT * FROM Video_Games
-WHERE critic_score IS NULL;
+WHERE critic_score IS NULL
+AND critic_count IS NULL
+AND user_score IS NULL
+AND user_count IS NULL;
+/*
+The scores and counts of both critics and users will be deleted as nearly half of the dataset misses
+these values and these features aren't truly important in this analysis
+*/
+ALTER TABLE Video_Games DROP COLUMN critic_score;
+ALTER TABLE Video_Games DROP COLUMN critic_count;
+ALTER TABLE Video_Games DROP COLUMN user_score;
+ALTER TABLE Video_Games DROP COLUMN user_count;
+
+
+SELECT * FROM Video_Games
+WHERE developer IS NULL;
+/*
+Some games with null values in the developer columns may have been released on different consoles,
+thus being depicted on another row where the developer may be specified
+*/
+UPDATE Video_Games AS t1
+SET developer = t2.developer
+FROM
+(
+	SELECT * FROM Video_Games
+	WHERE developer IS NOT NULL
+) AS t2
+WHERE t1.game_name = t2.game_name
+/*
+Some games may be sequels or part of a series. The ones with missing developers will have the values 
+replaced with the developers from the other games in their series. In the publisher column, which will
+be used for determining wether a game is in a series or not, there are 'N/A' values. These values 
+will have to be replaced or deleted in order to properly replace some of the null values from the 
+developer column
+*/
+--Replacing N/A
+UPDATE Video_Games AS t1
+SET publisher = t2.publisher
+FROM 
+(
+	SELECT * FROM Video_Games
+	WHERE publisher <> 'N/A'
+) AS t2
+WHERE t1.game_name = t2.game_name
+AND t1.publisher = 'N/A'
+--Deleting rows with N/A
+DELETE FROM Video_Games
+WHERE publisher = 'N/A'
+--Replacing the null values from the developer column
+WITH sorted_data AS 
+(
+	SELECT *,
+	LAG(game_name) OVER(ORDER BY game_name) AS prev_game,
+	LAG(publisher) OVER(ORDER BY game_name) AS prev_publish,
+	LAG(developer) OVER(ORDER BY game_name) AS prev_dev,
+	LEAD(game_name) OVER (ORDER BY game_name) AS next_game,
+	LEAD(publisher) OVER (ORDER BY game_name) AS next_publish,
+	LEAD(developer) OVER (ORDER BY game_name) AS next_dev
+	FROM Video_Games
+	WHERE developer IS NOT NULL
+)
+UPDATE Video_Games AS t1
+SET developer = COALESCE(
+	(
+		SELECT prev_dev FROM sorted_data
+		WHERE TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION(' ' IN t1.game_name))) = 
+		TRIM(SUBSTRING(prev_game FROM 1 FOR POSITION(' ' IN prev_game)))
+		AND prev_publish = t1.publisher
+		LIMIT 1
+	),
+	(
+		SELECT next_dev FROM sorted_data
+		WHERE TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION(' ' IN t1.game_name))) = 
+		TRIM(SUBSTRING(next_game FROM 1 FOR POSITION(' ' IN next_game)))
+		AND next_publish = t1.publisher
+		LIMIT 1
+	)
+)
+WHERE developer IS NULL;
+/*
+Due to there being no other reliable way of inferring the developer, the rest of the data will be
+deleted
+*/
+DELETE FROM Video_Games
+WHERE developer IS NULL
