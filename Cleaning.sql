@@ -206,7 +206,6 @@ WHERE year_of_release IS NULL;
 The rest of the missing years of release will be replaced with the average year of release of the
 platform that it appeared on
 */
-
 WITH platform_avg_years AS
 (
 	SELECT platform, 
@@ -218,3 +217,32 @@ SET year_of_release = avg_year
 FROM platform_avg_years AS t2
 WHERE t1.platform = t2.platform
 AND year_of_release IS NULL;
+
+
+SELECT * FROM Video_Games
+WHERE genre IS NULL;
+
+SELECT * FROM Video_Games
+WHERE publisher IS NULL;
+
+SELECT * FROM Video_Games
+WHERE na_sales IS NULL;
+
+SELECT * FROM Video_Games
+WHERE eu_sales IS NULL;
+
+SELECT * FROM Video_Games
+WHERE jp_sales IS NULL;
+
+SELECT * FROM Video_Games
+WHERE other_sales IS NULL;
+
+SELECT * FROM Video_Games
+WHERE global_sales IS NULL;
+/*
+The genre, publisher, NA, EU, JP, Other and Global sales have no null values
+*/
+
+
+SELECT * FROM Video_Games
+WHERE critic_score IS NULL;
