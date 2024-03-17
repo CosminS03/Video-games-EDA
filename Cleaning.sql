@@ -329,4 +329,59 @@ Due to there being no other reliable way of inferring the developer, the rest of
 deleted
 */
 DELETE FROM Video_Games
-WHERE developer IS NULL
+WHERE developer IS NULL;
+
+
+SELECT * FROM Video_Games
+WHERE rating IS NULL;
+/*
+As it had been done above, some of the null values from the rating column will be replaced with the
+values of the same game depicted on a different row
+*/
+UPDATE Video_Games AS t1
+SET rating = t2.rating
+FROM 
+(
+	SELECT * FROM Video_Games
+	WHERE rating IS NOT NULL
+) AS t2
+WHERE t1.game_name = t2.game_name
+AND t1.rating IS NULL;
+/*
+The games will be checked to see if they are part of a series and then based on that the rating will 
+be replaced
+*/
+WITH sorted_data AS 
+(
+	SELECT *,
+	LAG(game_name) OVER(ORDER BY game_name) AS prev_game,
+	LAG(publisher) OVER(ORDER BY game_name) AS prev_pub,
+	LAG(rating) OVER(ORDER BY game_name) AS prev_rating,
+	LEAD(game_name) OVER(ORDER BY game_name) AS next_game,
+	LEAD(publisher) OVER(ORDER BY game_name) AS next_pub,
+	LEAD(rating) OVER(ORDER BY game_name) AS next_rating
+	FROM Video_Games
+	WHERE rating IS NOT NULL
+)
+UPDATE Video_Games AS t1
+SET rating = COALESCE
+(
+	(
+		SELECT prev_rating FROM sorted_data
+		WHERE TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION(' ' IN t1.game_name))) = 
+		TRIM(SUBSTRING(prev_game FROM 1 FOR POSITION(' ' IN prev_game)))
+		AND t1.publisher = prev_pub
+		LIMIT 1
+	),
+	(
+		SELECT next_rating FROM sorted_data
+		WHERE TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION(' ' IN t1.game_name))) = 
+		TRIM(SUBSTRING(next_game FROM 1 FOR POSITION('' IN next_game)))
+		AND t1.publisher = next_pub
+		LIMIT 1
+	)
+)
+WHERE rating IS NULL
+--The rest of the rows will be deleted
+DELETE FROM Video_Games
+WHERE rating IS NULL;
