@@ -126,8 +126,8 @@ other_sales = t1.other_sales + t2.other_sales,
 global_sales = t1.global_sales + t2.global_sales,
 game_name = TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1))
 FROM Video_Games AS t2
-WHERE RIGHT(t1.game_name, 6) = 'sales)'
-AND RIGHT(t2.game_name, 6) = 'sales)'
+WHERE RIGHT(t1.game_name, 5) = 'ales)'
+AND RIGHT(t2.game_name, 5) = 'ales)'
 AND TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1)) = 
 TRIM(SUBSTRING(t2.game_name FROM 1 FOR POSITION('(' IN t2.game_name) - 1))
 AND t1.game_name <> t2.game_name;
@@ -272,7 +272,7 @@ FROM
 	SELECT * FROM Video_Games
 	WHERE developer IS NOT NULL
 ) AS t2
-WHERE t1.game_name = t2.game_name
+WHERE t1.game_name = t2.game_name;
 /*
 Some games may be sequels or part of a series. The ones with missing developers will have the values 
 replaced with the developers from the other games in their series. In the publisher column, which will
@@ -289,10 +289,10 @@ FROM
 	WHERE publisher <> 'N/A'
 ) AS t2
 WHERE t1.game_name = t2.game_name
-AND t1.publisher = 'N/A'
+AND t1.publisher = 'N/A';
 --Deleting rows with N/A
 DELETE FROM Video_Games
-WHERE publisher = 'N/A'
+WHERE publisher = 'N/A';
 --Replacing the null values from the developer column
 WITH sorted_data AS 
 (
@@ -381,7 +381,54 @@ SET rating = COALESCE
 		LIMIT 1
 	)
 )
-WHERE rating IS NULL
+WHERE rating IS NULL;
 --The rest of the rows will be deleted
 DELETE FROM Video_Games
 WHERE rating IS NULL;
+
+SELECT DISTINCT game_name FROM Video_Games;
+
+
+/*
+On visual inspection of the dataset, there still are values in the game_name column that have 
+additional informtaion inside parenthesis. These will be updated as to not have the additional info
+anymore.Exception is World Soccer Winning Eleven 7 International which has a japanese version so this
+game will remain untouched. Also, the game Dance Dance Revolution is split in 2 rows, one for US sales
+and one for japanese sales, not being aggregated earliei because of it's unique format for the 
+additional info.
+*/
+--DATA VIITOARE
+UPDATE Video_Games AS t1
+SET na_sales = t1.na_sales + t2.na_sales,
+eu_sales = t1.eu_sales + t2.eu_sales,
+jp_sales = t1.jp_sales + t2.jp_sales,
+other_sales = t1.other_sales + t2.other_sales,
+global_sales = t1.global_sales + t2.global_sales,
+game_name = TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1))
+FROM Video_Games AS t2
+WHERE t1.game_name LIKE 'Dance Dance Revolution (%'
+AND t2.game_name LIKE 'Dance Dance Revolution (%';
+
+UPDATE Video_Games AS t1
+SET na_sales = t1.na_sales + t2.na_sales,
+eu_sales = t1.eu_sales + t2.eu_sales,
+jp_sales = t1.jp_sales + t2.jp_sales,
+other_sales = t1.other_sales + t2.other_sales,
+global_sales = t1.global_sales + t2.global_sales,
+game_name = TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1))
+FROM Video_Games AS t2
+WHERE RIGHT(t1.game_name, 5) = 'ales)'
+AND RIGHT(t2.game_name, 5) = 'ales)'
+AND TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1)) = 
+TRIM(SUBSTRING(t2.game_name FROM 1 FOR POSITION('(' IN t2.game_name) - 1))
+AND t1.game_name <> t2.game_name;
+
+DELETE FROM Video_Games
+WHERE CTID IN (
+	SELECT CTID FROM(
+		SELECT *,
+		ROW_NUMBER() OVER(PARTITION BY game_name, platform) AS rn,
+		CTID
+		FROM Video_Games) X
+	WHERE X.rn > 1
+);
