@@ -386,49 +386,25 @@ WHERE rating IS NULL;
 DELETE FROM Video_Games
 WHERE rating IS NULL;
 
+
 SELECT DISTINCT game_name FROM Video_Games;
-
-
 /*
 On visual inspection of the dataset, there still are values in the game_name column that have 
 additional informtaion inside parenthesis. These will be updated as to not have the additional info
-anymore.Exception is World Soccer Winning Eleven 7 International which has a japanese version so this
-game will remain untouched. Also, the game Dance Dance Revolution is split in 2 rows, one for US sales
-and one for japanese sales, not being aggregated earliei because of it's unique format for the 
-additional info.
+anymore. Exceptions are the games Dance Dance Revolution and World Soccer Winning Eleven 7
+International because these games have different versions for different regions and thus the 
+additional info will not be deleted
 */
---DATA VIITOARE
-UPDATE Video_Games AS t1
-SET na_sales = t1.na_sales + t2.na_sales,
-eu_sales = t1.eu_sales + t2.eu_sales,
-jp_sales = t1.jp_sales + t2.jp_sales,
-other_sales = t1.other_sales + t2.other_sales,
-global_sales = t1.global_sales + t2.global_sales,
-game_name = TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1))
-FROM Video_Games AS t2
-WHERE t1.game_name LIKE 'Dance Dance Revolution (%'
-AND t2.game_name LIKE 'Dance Dance Revolution (%';
+UPDATE Video_Games 
+SET game_name = TRIM(SUBSTRING(game_name FROM 1 FOR POSITION('(' IN game_name) - 1))
+WHERE game_name LIKE '%(%'
+AND game_name  NOT IN
+('Dance Dance Revolution (Japan)', 'World Soccer Winning Eleven 7 International (JP version)',
+'Dance Dance Revolution (North America)');
 
-UPDATE Video_Games AS t1
-SET na_sales = t1.na_sales + t2.na_sales,
-eu_sales = t1.eu_sales + t2.eu_sales,
-jp_sales = t1.jp_sales + t2.jp_sales,
-other_sales = t1.other_sales + t2.other_sales,
-global_sales = t1.global_sales + t2.global_sales,
-game_name = TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1))
-FROM Video_Games AS t2
-WHERE RIGHT(t1.game_name, 5) = 'ales)'
-AND RIGHT(t2.game_name, 5) = 'ales)'
-AND TRIM(SUBSTRING(t1.game_name FROM 1 FOR POSITION('(' IN t1.game_name) - 1)) = 
-TRIM(SUBSTRING(t2.game_name FROM 1 FOR POSITION('(' IN t2.game_name) - 1))
-AND t1.game_name <> t2.game_name;
 
-DELETE FROM Video_Games
-WHERE CTID IN (
-	SELECT CTID FROM(
-		SELECT *,
-		ROW_NUMBER() OVER(PARTITION BY game_name, platform) AS rn,
-		CTID
-		FROM Video_Games) X
-	WHERE X.rn > 1
-);
+SELECT DISTINCT platform FROM Video_Games;
+SELECT DISTINCT year_of_release FROM Video_Games;
+SELECT DISTINCT genre FROM Video_Games;
+SELECT DISTINCT publisher FROM Video_Games
+--DELETE games with Unknown publisher and the 2020 games because they're outliers
