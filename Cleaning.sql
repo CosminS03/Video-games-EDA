@@ -405,6 +405,106 @@ AND game_name  NOT IN
 
 SELECT DISTINCT platform FROM Video_Games;
 SELECT DISTINCT year_of_release FROM Video_Games;
+/*
+There is one outlier in this dataset regarding the year of release. The game Imagine: Makeup Artist
+is the only game released in 2020 and no other game in this dataset has a year of release between
+2017 and 2020
+*/
+DELETE FROM Video_Games
+WHERE year_of_release = 2020;
+
+
 SELECT DISTINCT genre FROM Video_Games;
-SELECT DISTINCT publisher FROM Video_Games
---DELETE games with Unknown publisher and the 2020 games because they're outliers
+SELECT DISTINCT publisher FROM Video_Games;
+/*
+Some games have unknown publishers which cannot be inferred and will be deleted
+*/
+DELETE FROM Video_Games
+WHERE publisher = 'Unknown';
+
+
+SELECT DISTINCT developer FROM Video_Games;
+SELECT DISTINCT rating FROM Video_Games;
+--There are cells with multiple different values => 1NF
+--The developers with Inc in their name have "," before it, they will be treated as a single value
+--There is a cell with an Inc company but that cell also has as the associate the same company without
+--	the inc; the same with ltd, LLC., S.R.L.
+--there are also cells with 3 devs
+CREATE TABLE Developers AS
+SELECT game_name,platform, TRIM(developer) AS developer
+FROM Video_Games;
+
+/*
+For some games, the developers' name have commas in them used before the suffixes "Inc", "Ltd" and 
+"LLC". These suffixes will be deleted from names only if they have a comma in front so that they don't
+interfere with the division of the cells with multiple developers
+*/
+UPDATE Developers
+SET developer = 
+	CASE
+		WHEN developer LIKE '%, Inc.' THEN LEFT(developer, LENGTH(developer) - 6)
+		WHEN developer LIKE '%, Inc' THEN LEFT(developer, LENGTH(developer) - 5)
+		WHEN developer LIKE '%, Ltd.' THEN LEFT(developer, LENGTH(developer) - 6)
+		WHEN developer LIKE '%, LLC' THEN LEFT(developer, LENGTH(developer) - 5)
+		WHEN developer LIKE '%,Ltd.' THEN LEFT(developer, LENGTH(developer) - 5) 
+		WHEN developer LIKE '%, Lda' THEN LEFT(developer, LENGTH(developer) - 5)
+	END
+WHERE developer LIKE '%, Inc.'
+OR developer LIKE '%, Ltd.'
+OR developer LIKE '%, LLC'
+OR developer LIKE '%,Ltd.'
+OR developer LIKE '% Inc'
+OR developer LIKE '%, Lda';
+
+SELECT * FROM Developers
+WHERE developer LIKE '%,%,%'
+
+BEGIN TRANSACTION;
+SAVEPOINT before_updates;
+--TAKES THE FIRST DEVELOPER WHERE THERE ARE 3
+INSERT INTO Developers
+SELECT game_name, platform,
+TRIM(SUBSTRING(developer FROM 1 FOR POSITION(',' IN developer) - 1))
+FROM Developers
+WHERE developer LIKE '%,%,%';
+
+--DELETES THE FIRST DEVELOPER
+UPDATE Developers
+SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
+WHERE developer LIKE '%,%,%';
+
+--DELETES THE INC AND LTD FROM THE FRONT
+UPDATE Developers
+SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
+WHERE developer LIKE 'Ltd.,%'
+OR developer LIKE 'Inc,%'
+
+--TAKES THE FIRST DEVELOPER WHERE THERE ARE 2
+INSERT INTO Developers
+SELECT game_name, platform,
+TRIM(SUBSTRING(developer FROM 1 FOR POSITION(',' IN developer) - 1))
+FROM Developers
+WHERE developer LIKE '%,%'
+
+--DELETES THE FIRST DEVELOPER WHERE THERE ARE 2
+UPDATE Developers
+SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
+WHERE developer LIKE '%,%'
+
+--CHECKING
+SELECT * FROM Developers
+WHERE developer LIKE '%,%'
+
+COMMIT
+
+--DELETING DUPLICATES
+DELETE FROM Developers
+WHERE CTID IN
+(
+	SELECT MAX(CTID)
+	FROM Developers
+	GROUP BY game_name, platform, developer
+	HAVING COUNT(*) > 1
+)
+
+--WRITE EXPLANATION AND SEND TO GITHUB
