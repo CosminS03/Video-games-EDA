@@ -425,11 +425,10 @@ WHERE publisher = 'Unknown';
 
 SELECT DISTINCT developer FROM Video_Games;
 SELECT DISTINCT rating FROM Video_Games;
---There are cells with multiple different values => 1NF
---The developers with Inc in their name have "," before it, they will be treated as a single value
---There is a cell with an Inc company but that cell also has as the associate the same company without
---	the inc; the same with ltd, LLC., S.R.L.
---there are also cells with 3 devs
+/*
+The column developer has multiple values in a single cell, thus it must be reduced to 1NF. To do that,
+another table named Developers will be created with the columns game_name, platform and developers.
+*/
 CREATE TABLE Developers AS
 SELECT game_name,platform, TRIM(developer) AS developer
 FROM Video_Games;
@@ -437,7 +436,7 @@ FROM Video_Games;
 /*
 For some games, the developers' name have commas in them used before the suffixes "Inc", "Ltd" and 
 "LLC". These suffixes will be deleted from names only if they have a comma in front so that they don't
-interfere with the division of the cells with multiple developers
+interfere with the division of the cells with multiple developers.
 */
 UPDATE Developers
 SET developer = 
@@ -456,48 +455,53 @@ OR developer LIKE '%,Ltd.'
 OR developer LIKE '% Inc'
 OR developer LIKE '%, Lda';
 
-SELECT * FROM Developers
-WHERE developer LIKE '%,%,%'
-
+/*
+The following sequence of querries will take the first developer of the cells with multiple ones and 
+insert it on a new line along with the game name and platform of the original line. After that, the 
+first developer from the original cell will be deleted. This process will be done a second time
+because within this dataset the games can have a maximum of 3 developers.
+*/
 BEGIN TRANSACTION;
-SAVEPOINT before_updates;
---TAKES THE FIRST DEVELOPER WHERE THERE ARE 3
+--Separating the first developer of the cells that have 3
 INSERT INTO Developers
 SELECT game_name, platform,
 TRIM(SUBSTRING(developer FROM 1 FOR POSITION(',' IN developer) - 1))
 FROM Developers
 WHERE developer LIKE '%,%,%';
 
---DELETES THE FIRST DEVELOPER
+--Deleting the first developer from the cells that have 3 of them
 UPDATE Developers
 SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
 WHERE developer LIKE '%,%,%';
 
---DELETES THE INC AND LTD FROM THE FRONT
+/*
+Due to deleting the first developers from the cells with 3 based on commas, a cell now start with
+"Inc," and another one starts with "Ltd.,". These prefixes will be deleted
+*/
 UPDATE Developers
 SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
 WHERE developer LIKE 'Ltd.,%'
 OR developer LIKE 'Inc,%'
 
---TAKES THE FIRST DEVELOPER WHERE THERE ARE 2
+--Separating the first developer of the cells that have 2
 INSERT INTO Developers
 SELECT game_name, platform,
 TRIM(SUBSTRING(developer FROM 1 FOR POSITION(',' IN developer) - 1))
 FROM Developers
 WHERE developer LIKE '%,%'
 
---DELETES THE FIRST DEVELOPER WHERE THERE ARE 2
+--Deleting the first developer from the cells that have 2
 UPDATE Developers
 SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
 WHERE developer LIKE '%,%'
 
---CHECKING
-SELECT * FROM Developers
-WHERE developer LIKE '%,%'
-
 COMMIT
 
---DELETING DUPLICATES
+/*
+In the original dataset there were games that had in the developer columns the name of the company
+with and without the suffixes like "Inc". By deleting those suffixes when seperating the developers
+duplicate rows might have been produced.
+*/
 DELETE FROM Developers
 WHERE CTID IN
 (
@@ -506,5 +510,3 @@ WHERE CTID IN
 	GROUP BY game_name, platform, developer
 	HAVING COUNT(*) > 1
 )
-
---WRITE EXPLANATION AND SEND TO GITHUB
