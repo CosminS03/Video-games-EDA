@@ -481,21 +481,21 @@ Due to deleting the first developers from the cells with 3 based on commas, a ce
 UPDATE Developers
 SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
 WHERE developer LIKE 'Ltd.,%'
-OR developer LIKE 'Inc,%'
+OR developer LIKE 'Inc,%';
 
 --Separating the first developer of the cells that have 2
 INSERT INTO Developers
 SELECT game_name, platform,
 TRIM(SUBSTRING(developer FROM 1 FOR POSITION(',' IN developer) - 1))
 FROM Developers
-WHERE developer LIKE '%,%'
+WHERE developer LIKE '%,%';
 
 --Deleting the first developer from the cells that have 2
 UPDATE Developers
 SET developer = TRIM(SUBSTRING(developer FROM POSITION(',' IN developer) + 1 FOR LENGTH(developer)))
-WHERE developer LIKE '%,%'
+WHERE developer LIKE '%,%';
 
-COMMIT
+COMMIT;
 
 /*
 In the original dataset there were games that had in the developer columns the name of the company
@@ -509,4 +509,28 @@ WHERE CTID IN
 	FROM Developers
 	GROUP BY game_name, platform, developer
 	HAVING COUNT(*) > 1
-)
+);
+
+ALTER TABLE Video_Games
+DROP COLUMN developer;
+
+/*
+The current video_games table has the genre and rating column which depends only on the game_name, 
+while the primary key is composed of both game_name and platform, thus it must be reduced to the 2NF.
+*/
+CREATE TABLE Games AS
+SELECT game_name, genre, rating
+FROM Video_Games;
+
+ALTER TABLE Video_Games
+DROP COLUMN genre;
+
+ALTER TABLE Video_Games
+DROP COLUMN rating;
+
+CREATE TABLE Games_Bkp AS
+SELECT DISTINCT * FROM Games;
+
+DROP TABLE Games;
+
+ALTER TABLE Games_Bkp RENAME TO Games;
