@@ -1,3 +1,4 @@
+--UPDATE POSTGRESQL
 --Creating the table for the data to be inserted into
 CREATE TABLE Video_Games
 (
@@ -518,19 +519,37 @@ DROP COLUMN developer;
 The current video_games table has the genre and rating column which depends only on the game_name, 
 while the primary key is composed of both game_name and platform, thus it must be reduced to the 2NF.
 */
-CREATE TABLE Games AS
-SELECT game_name, genre, rating
-FROM Video_Games;
 
-ALTER TABLE Video_Games
+--RENORMALIZE, BUT KEEP THE 2NF-ING OF VIDEO_GAMES
+--RECREATE THE WHOLE PROJECT
+
+--2NF
+ALTER TABLE Video_Games RENAME TO Sales;
+
+CREATE TABLE Games AS
+SELECT game_name, platform, genre, rating 
+FROM Sales;
+
+ALTER TABLE Sales
 DROP COLUMN genre;
 
-ALTER TABLE Video_Games
+ALTER TABLE Sales
 DROP COLUMN rating;
 
-CREATE TABLE Games_Bkp AS
-SELECT DISTINCT * FROM Games;
+DELETE FROM Games
+WHERE CTID IN 
+(
+	SELECT MAX(CTID) FROM Games
+	GROUP BY game_name, platform
+	HAVING COUNT(*) > 1
+)
 
-DROP TABLE Games;
+--3NF CHECK
+--4NF CHECK
 
-ALTER TABLE Games_Bkp RENAME TO Games;
+CREATE TABLE Publishers AS
+SELECT game_name, platform, year_of_release, publisher
+FROM Sales;
+
+ALTER TABLE Sales
+DROP COLUMN publisher;
