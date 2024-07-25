@@ -554,4 +554,16 @@ FROM Sales;
 ALTER TABLE Sales
 DROP COLUMN publisher;
 
---C:\Users\spanu\Desktop\Video_Games_EDA
+--Adding constraints
+
+ALTER TABLE developers
+ADD CONSTRAINT Developers_primary_key PRIMARY KEY(game_name, platform, developer);
+
+ALTER TABLE Games
+ADD CONSTRAINT Games_primary_key PRIMARY KEY(game_name, platform);
+
+ALTER TABLE Publishers
+ADD CONSTRAINT Publishers_primary_key PRIMARY KEY(game_name, platform, year_of_release);
+
+ALTER TABLE Sales
+ADD CONSTRAINT Sales_primary_key PRIMARY KEY(game_name, platform, year_of_release);
