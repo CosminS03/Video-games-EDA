@@ -553,3 +553,5 @@ FROM Sales;
 
 ALTER TABLE Sales
 DROP COLUMN publisher;
+
+--C:\Users\spanu\Desktop\Video_Games_EDA
