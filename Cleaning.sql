@@ -387,6 +387,14 @@ WHERE rating IS NULL;
 DELETE FROM Video_Games
 WHERE rating IS NULL;
 
+--remove duplicates
+DELETE FROM Video_Games
+WHERE CTID IN 
+(
+	SELECT MAX(CTID) FROM Video_Games
+	GROUP BY game_name, platform, year_of_release
+	HAVING COUNT(*) > 1
+);
 
 SELECT DISTINCT game_name FROM Video_Games;
 /*
@@ -527,7 +535,7 @@ while the primary key is composed of both game_name and platform, thus it must b
 ALTER TABLE Video_Games RENAME TO Sales;
 
 CREATE TABLE Games AS
-SELECT game_name, platform, genre, rating 
+SELECT game_name, platform, year_of_release, publisher, genre, rating 
 FROM Sales;
 
 ALTER TABLE Sales
@@ -536,34 +544,51 @@ DROP COLUMN genre;
 ALTER TABLE Sales
 DROP COLUMN rating;
 
+ALTER TABLE Sales
+DROP COLUMN publisher;
+
 DELETE FROM Games
 WHERE CTID IN 
 (
 	SELECT MAX(CTID) FROM Games
 	GROUP BY game_name, platform
 	HAVING COUNT(*) > 1
-)
+);
 
 --3NF CHECK
 --4NF CHECK
 
-CREATE TABLE Publishers AS
-SELECT game_name, platform, year_of_release, publisher
-FROM Sales;
-
-ALTER TABLE Sales
-DROP COLUMN publisher;
-
 --Adding constraints
-
-ALTER TABLE developers
-ADD CONSTRAINT Developers_primary_key PRIMARY KEY(game_name, platform, developer);
+ALTER TABLE Sales
+ADD COLUMN game_version_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY;
 
 ALTER TABLE Games
-ADD CONSTRAINT Games_primary_key PRIMARY KEY(game_name, platform);
-
-ALTER TABLE Publishers
-ADD CONSTRAINT Publishers_primary_key PRIMARY KEY(game_name, platform, year_of_release);
+ADD CONSTRAINT Games_primary_key PRIMARY KEY(game_name, platform, year_of_release);
 
 ALTER TABLE Sales
-ADD CONSTRAINT Sales_primary_key PRIMARY KEY(game_name, platform, year_of_release);
+ADD CONSTRAINT unique_game_versions UNIQUE(game_name, platform, year_of_release);
+
+ALTER TABLE Games
+ADD CONSTRAINT Games_foreign_key FOREIGN KEY(game_name, platform, year_of_release)
+REFERENCES Sales(game_name, platform, year_of_release);
+
+CREATE TABLE Dev_bckp
+AS
+SELECT D.game_name, D.platform, developer, game_version_id 
+FROM Developers D
+JOIN Sales S
+ON D.game_name = S.game_name
+AND D.platform = S.platform;
+
+DROP TABLE Developers;
+
+ALTER TABLE Dev_bckp RENAME TO Developers;
+
+ALTER TABLE Developers
+ADD CONSTRAINT Developers_primary_key PRIMARY KEY(game_name, platform, developer, game_version_id);
+
+ALTER TABLE Developers
+ADD CONSTRAINT Developers_foreign_key FOREIGN KEY(game_version_id) 
+REFERENCES Sales(game_version_id);
+
+SELECT * FROM Developers;
