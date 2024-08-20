@@ -1,9 +1,33 @@
---Which are the games that sold the best in every part of the world?
---Is there a difference between the prefferences of genre from one region to another?
+/*
+Which are the games that sold the best in every part of the world?
+*/
+--Is there a difference between the prefferences of genre from one region to another? 
+	--How about rating?
 --Which publihser had the best sales in each region?
 --Which developer had the best sales in each region?
 --Which is the most succesful year for the video game industry?
 --Which region has the most sales?
+--What is the game that has the most versions?
+--What region was the best in terms of sales?
+--Which platform supported the most sales?
+--Are there platform prefferences when it comes to geographical allocation? If so, which platform
+--	supported the most sales in which region?
+--What are the trends in the video game industry?
+--Which developer has the best Sales/volume ratio?
+--Which publisher has the best sale/volume ratio?
+--Do ratings geared towards a younger demographic sell more?
+--What's the time period of the data and how far is it from today?
+--What are the top 3 best platforms in terms of video game sales for every year?(rollup)
+--What is the top 3 best selling games for each platform?(Row_number)
+--Rank games within each genre based on their sales in North America(rank or dense_rank)
+--Identify the highest and second highest selling games for each publisher(rank)
+--Calculate the year_over_year sales growth for each paltform(lag)
+--Identify the first game by each publisher to reach 1 million in global sales(row_number)
+--Rank games by their sales within each release year(rank)
+--Calculate the trailing 3-year average sales for all the developers released a game in the most
+--	recent year(lag)
+--Identify publishers with consistently increasing or decreasing sales over the years(lag and lead)
+--Rank each platform by total global sales(rank)
 
 CREATE VIEW categorical_counts
 AS
@@ -100,3 +124,22 @@ SELECT MIN(global_sales),
 	MODE() WITHIN GROUP(ORDER BY global_sales),
 	ROUND(STDDEV_POP(global_sales), 2) AS standard_deviation
 FROM Sales;
+
+--Which are the games that sold the best in every part of the world?
+SELECT game_name, platform, year_of_release, na_sales FROM Sales
+WHERE na_sales = (SELECT MAX(na_sales) FROM Sales);
+
+SELECT game_name, platform, year_of_release, eu_sales FROM Sales
+WHERE eu_sales = (SELECT MAX(eu_sales) FROM Sales);
+
+SELECT game_name, platform, year_of_release, jp_sales FROM Sales
+WHERE jp_sales = (SELECT MAX(jp_sales) FROM Sales);
+
+SELECT game_name, platform, year_of_release, other_sales FROM Sales
+WHERE other_sales = (SELECT MAX(other_sales) FROM Sales);
+
+SELECT game_name, platform, year_of_release, global_sales FROM Sales
+WHERE global_sales = (SELECT MAX(global_sales) FROM Sales);
+
+--Is there a difference between the prefferences of genre from one region to another? 
+	--How about rating?
