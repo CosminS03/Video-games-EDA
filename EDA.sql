@@ -1,14 +1,13 @@
 /*
-Which are the games that sold the best in every part of the world?
+-Which are the games that sold the best in every part of the world?
+-Is there a difference between the prefferences of genre from one region to another? 
+	How about rating?
+-Which publihser had the best sales in each region?
+-Which developer had the best sales in each region?
+-Which region has the most sales?
 */
---Is there a difference between the prefferences of genre from one region to another? 
-	--How about rating?
---Which publihser had the best sales in each region?
---Which developer had the best sales in each region?
 --Which is the most succesful year for the video game industry?
---Which region has the most sales?
 --What is the game that has the most versions?
---What region was the best in terms of sales?
 --Which platform supported the most sales?
 --Are there platform prefferences when it comes to geographical allocation? If so, which platform
 --	supported the most sales in which region?
@@ -142,4 +141,109 @@ SELECT game_name, platform, year_of_release, global_sales FROM Sales
 WHERE global_sales = (SELECT MAX(global_sales) FROM Sales);
 
 --Is there a difference between the prefferences of genre from one region to another? 
-	--How about rating?
+	--How about rating?	
+SELECT genre, SUM(na_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY genre
+ORDER BY SUM(na_sales) DESC
+LIMIT 3;
+
+SELECT genre, SUM(eu_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY genre
+ORDER BY SUM(eu_sales) DESC
+LIMIT 3;
+
+SELECT genre, SUM(jp_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY genre
+ORDER BY SUM(jp_sales) DESC
+LIMIT 3;
+
+SELECT genre, SUM(other_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY genre
+ORDER BY SUM(other_sales) DESC
+LIMIT 3;
+
+--Which publihser had the best sales in each region?
+SELECT publisher, SUM(na_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY publisher
+ORDER BY SUM(na_sales) DESC
+LIMIT 1;
+
+SELECT publisher, SUM(eu_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY publisher
+ORDER BY SUM(eu_sales) DESC
+LIMIT 1;
+
+SELECT publisher, SUM(jp_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY publisher
+ORDER BY SUM(jp_sales) DESC
+LIMIT 1;
+
+SELECT publisher, SUM(other_sales) AS sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY publisher
+ORDER BY SUM(other_sales) DESC
+LIMIT 1;
+
+--Which developer had the best sales in each region?
+SELECT developer, SUM(na_sales) AS sales FROM Developers dev
+JOIN Sales
+ON dev.game_version_id = Sales.game_version_id
+GROUP BY developer 
+ORDER BY SUM(na_sales) DESC
+LIMIT 1;
+
+SELECT developer, SUM(eu_sales) AS sales FROM Developers dev
+JOIN Sales
+ON dev.game_version_id = Sales.game_version_id
+GROUP BY developer 
+ORDER BY SUM(eu_sales) DESC
+LIMIT 1;
+
+SELECT developer, SUM(jp_sales) AS sales FROM Developers dev
+JOIN Sales
+ON dev.game_version_id = Sales.game_version_id
+GROUP BY developer 
+ORDER BY SUM(jp_sales) DESC
+LIMIT 1;
+
+SELECT developer, SUM(other_sales) AS sales FROM Developers dev
+JOIN Sales
+ON dev.game_version_id = Sales.game_version_id
+GROUP BY developer 
+ORDER BY SUM(other_sales) DESC
+LIMIT 1;
+
+--Which region has the most sales?
+SELECT SUM(na_sales) AS NA, SUM(eu_sales) AS EU, SUM(jp_sales) AS JP, SUM(other_sales) AS Other
+FROM Sales;
