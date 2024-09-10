@@ -13,19 +13,18 @@
 -Calculate the trailing 3-year average sales for all the developers released a game in the most
 	recent year(lag)
 -Identify publishers with consistently increasing or decreasing sales over the years(lag and lead)
+-Rank each platform by total global sales(rank)
+-Are there platform prefferences when it comes to geographical allocation? If so, which platform 
+	supported the most sales in which region?
+-What is the top 3 best selling games for each platform?(Row_number)
 */
 --What is the game that has the most versions?
---Which platform supported the most sales?
---Are there platform prefferences when it comes to geographical allocation? If so, which platform
---	supported the most sales in which region?
 --Which developer has the best Sales/volume ratio?
 --Which publisher has the best sale/volume ratio?
 --Do ratings geared towards a younger demographic sell more?
---What is the top 3 best selling games for each platform?(Row_number)
 --Rank games within each genre based on their sales in North America(rank or dense_rank)
 --Identify the highest and second highest selling games for each publisher(rank)
 --Identify the first game by each publisher to reach 1 million in global sales(row_number)
---Rank each platform by total global sales(rank)
 
 CREATE VIEW categorical_counts
 AS
@@ -41,7 +40,7 @@ ON Sales.game_name = Games.game_name
 AND Sales.platform = Games.platform
 AND Sales.year_of_release = Games.year_of_release;
 
---Value with the highert frequency for categorical variables
+--Value with the highest frequency for categorical variables
 
 CREATE VIEW categorical_mode_values
 AS
@@ -335,3 +334,53 @@ SELECT publisher, year_of_release,
 FROM publishers_recent_sales
 WHERE (Y1 > Y2 AND Y2 > Y3)
 OR (Y1 < Y2 AND Y2 < Y3);
+
+--Rank each platform by total global sales
+SELECT platform, RANK()OVER(ORDER BY total_sales DESC)
+FROM
+(
+	SELECT platform, SUM(global_sales) AS total_sales
+	FROM Sales
+	GROUP BY platform
+);
+
+--Are there platform prefferences when it comes to geographical allocation? If so, which platform
+--	supported the most sales in which region?
+(
+	SELECT 'Na', platform FROM Sales
+	GROUP BY platform
+	ORDER BY SUM(na_sales) DESC
+	LIMIT 1
+)
+UNION
+(
+	SELECT 'Eu', platform FROM Sales
+	GROUP BY platform
+	ORDER BY SUM(eu_sales) DESC
+	LIMIT 1
+)
+UNION 
+(
+	SELECT 'Jp', platform FROM Sales
+	GROUP BY platform
+	ORDER BY SUM(jp_sales) DESC
+	LIMIT 1
+)
+UNION
+(
+	SELECT 'Other', platform FROM Sales
+	GROUP BY platform
+	ORDER BY SUM(other_sales) DESC
+	LIMIT 1
+)
+
+--What is the top 3 best selling games for each platform?
+SELECT platform, game_name, rnk
+FROM
+(
+	SELECT platform, game_name, 
+		DENSE_RANK() OVER(PARTITION BY platform ORDER BY global_sales DESC) AS Rnk
+	FROM Sales
+)
+WHERE rnk <= 3
+ORDER BY platform, rnk
