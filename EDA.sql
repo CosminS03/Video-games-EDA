@@ -5,27 +5,26 @@
 -Which publihser had the best sales in each region?
 -Which developer had the best sales in each region?
 -Which region has the most sales?
+-Which is the most succesful year for the video game industry?
+-What's the time period of the data and how far is it from today?
+-What are the sales of every platform in each of the years that they had games in?
+-Calculate the year_over_year sales growth for each paltform
+-Rank games by their sales within each release year(rank)
+-Calculate the trailing 3-year average sales for all the developers released a game in the most
+	recent year(lag)
+-Identify publishers with consistently increasing or decreasing sales over the years(lag and lead)
 */
---Which is the most succesful year for the video game industry?
 --What is the game that has the most versions?
 --Which platform supported the most sales?
 --Are there platform prefferences when it comes to geographical allocation? If so, which platform
 --	supported the most sales in which region?
---What are the trends in the video game industry?
 --Which developer has the best Sales/volume ratio?
 --Which publisher has the best sale/volume ratio?
 --Do ratings geared towards a younger demographic sell more?
---What's the time period of the data and how far is it from today?
---What are the top 3 best platforms in terms of video game sales for every year?(rollup)
 --What is the top 3 best selling games for each platform?(Row_number)
 --Rank games within each genre based on their sales in North America(rank or dense_rank)
 --Identify the highest and second highest selling games for each publisher(rank)
---Calculate the year_over_year sales growth for each paltform(lag)
 --Identify the first game by each publisher to reach 1 million in global sales(row_number)
---Rank games by their sales within each release year(rank)
---Calculate the trailing 3-year average sales for all the developers released a game in the most
---	recent year(lag)
---Identify publishers with consistently increasing or decreasing sales over the years(lag and lead)
 --Rank each platform by total global sales(rank)
 
 CREATE VIEW categorical_counts
@@ -247,3 +246,92 @@ LIMIT 1;
 --Which region has the most sales?
 SELECT SUM(na_sales) AS NA, SUM(eu_sales) AS EU, SUM(jp_sales) AS JP, SUM(other_sales) AS Other
 FROM Sales;
+
+--Which is the most succesful year for the video game industry?
+SELECT year_of_release, SUM(global_sales) FROM Sales
+GROUP BY year_of_release
+ORDER BY SUM(global_sales) DESC
+LIMIT 1;
+
+--What's the time period of the data and how far is it from today?
+SELECT MIN(year_of_release) AS low_limit, MAX(year_of_release) AS high_limit,
+	EXTRACT(YEAR FROM current_timestamp) - MAX(year_of_release) AS diff_from_current_day
+FROM Sales;
+
+--What are the sales of every platform in each of the years that they had games in?
+SELECT platform,year_of_release, SUM(global_sales) AS Sales FROM Sales
+GROUP BY CUBE(platform, year_of_release)
+ORDER BY year_of_release;
+
+--Calculate the year_over_year sales growth for each paltform
+WITH Agg_year_platform_sales AS
+(
+	SELECT platform, year_of_release, SUM(global_sales) AS Sales FROM Sales
+	GROUP BY platform, year_of_release
+)
+SELECT *, LAG(sales) OVER(PARTITION BY platform ORDER BY year_of_release) AS previous_sales,
+	sales - LAG(sales) OVER(PARTITION BY platform ORDER BY year_of_release) AS Yoy_growth
+FROM Agg_year_platform_sales;
+
+--Rank games by their sales within each release year
+WITH Agg_year_game_sales AS
+(
+	SELECT game_name, year_of_release, SUM(global_sales) AS sales FROM Sales
+	GROUP BY year_of_release, game_name
+)
+SELECT *, RANK() OVER(PARTITION BY year_of_release ORDER BY sales DESC)
+FROM Agg_year_game_sales;
+
+--Calculate the trailing 3-year average sales for all the developers that released a game in the 
+--most recent year(lag)
+WITH developers_recent_sales AS
+(
+	SELECT developer, year_of_release, Sales as Y1,
+		LAG(Sales) OVER(PARTITION BY developer ORDER BY year_of_release) AS Y2,
+		LAG(Sales, 2) OVER(PARTITION BY developer ORDER BY year_of_release) AS Y3
+	FROM(
+		SELECT developer, year_of_release, SUM(global_sales) as Sales FROM Developers d
+		JOIN Sales s
+		ON d.game_version_id = s.game_version_id
+		WHERE developer IN
+		(
+			SELECT DISTINCT(developer) FROM Developers dev
+			JOIN Sales s
+			ON dev.game_version_id = s.game_version_id
+			WHERE year_of_release = 2016
+		)
+		GROUP BY developer, year_of_release
+		ORDER BY developer, year_of_release
+	)
+)
+SELECT developer, ROUND((y1 + y2 + y3) / 3, 2) AS Trailing_Sales_3Y FROM developers_recent_sales
+WHERE year_of_release = 2016
+AND y2 IS NOT NULL
+AND y3 IS NOT NULL
+ORDER BY Trailing_Sales_3Y DESC
+
+--Identify the publishers and years in which they had both a 3 year streak of growing or declining 
+--sales
+WITH publishers_recent_sales AS
+(
+	SELECT publisher, year_of_release, Sales AS Y1,
+		LAG(Sales) OVER(PARTITION BY publisher ORDER BY year_of_release) AS Y2,
+		LAG(Sales, 2) OVER(PARTITION BY publisher ORDER BY year_of_release) AS Y3
+	FROM (
+		SELECT publisher, s.year_of_release, SUM(global_sales) AS sales FROM Sales s
+		JOIN Games gm
+		ON s.game_name = gm.game_name
+		AND s.platform = gm.platform
+		AND s.year_of_release = gm.year_of_release
+		GROUP BY publisher, s.year_of_release
+		ORDER BY publisher ASC, s.year_of_release DESC
+	)
+)
+SELECT publisher, year_of_release,
+	CASE
+		WHEN Y1 > Y2 AND Y2 > Y3 THEN 'Growing'
+		WHEN Y1 < Y2 AND Y2 < Y3 THEN 'Declining'
+	END
+FROM publishers_recent_sales
+WHERE (Y1 > Y2 AND Y2 > Y3)
+OR (Y1 < Y2 AND Y2 < Y3);
