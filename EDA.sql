@@ -17,14 +17,13 @@
 -Are there platform prefferences when it comes to geographical allocation? If so, which platform 
 	supported the most sales in which region?
 -What is the top 3 best selling games for each platform?(Row_number)
+-Which developer has the best Sales/volume ratio?
+-Which publisher has the best sale/volume ratio?
+-Identify the first game by each publisher to reach 1 million in global sales(row_number)
 */
 --What is the game that has the most versions?
---Which developer has the best Sales/volume ratio?
---Which publisher has the best sale/volume ratio?
 --Do ratings geared towards a younger demographic sell more?
 --Rank games within each genre based on their sales in North America(rank or dense_rank)
---Identify the highest and second highest selling games for each publisher(rank)
---Identify the first game by each publisher to reach 1 million in global sales(row_number)
 
 CREATE VIEW categorical_counts
 AS
@@ -372,7 +371,7 @@ UNION
 	GROUP BY platform
 	ORDER BY SUM(other_sales) DESC
 	LIMIT 1
-)
+);
 
 --What is the top 3 best selling games for each platform?
 SELECT platform, game_name, rnk
@@ -383,4 +382,56 @@ FROM
 	FROM Sales
 )
 WHERE rnk <= 3
-ORDER BY platform, rnk
+ORDER BY platform, rnk;
+
+--Which developer has the best Sales/volume ratio?
+SELECT developer, ROUND(SUM(global_sales) / COUNT(*), 2) AS SalesToVolumeRatio FROM Developers dev
+JOIN Sales s
+ON s.game_version_id = dev.game_version_id
+GROUP BY developer
+ORDER BY SalesToVolumeRatio DESC
+LIMIT 1;
+
+--Which publisher has the best sale/volume ratio?
+SELECT publisher, ROUND(SUM(global_sales) / COUNT(*), 2) AS SalesVolumeRatio FROM Games 
+JOIN Sales
+ON Sales.game_name = Games.game_name
+AND Sales.platform = Games.platform
+AND Sales.year_of_release = Games.year_of_release
+GROUP BY publisher
+ORDER BY SalesVolumeRatio DESC
+LIMIT 1;
+
+--Identify the highest and second highest selling games for each publisher(rank)
+SELECT publisher, game_name, platform, year_of_release, rnk
+FROM
+(
+	SELECT publisher, Games.game_name, Games.platform, Games.year_of_release,
+		RANK() OVER(PARTITION BY publisher ORDER BY global_sales DESC) AS Rnk
+	FROM Games
+	JOIN Sales
+	ON Sales.game_name = Games.game_name
+	AND Sales.platform = Games.platform
+	AND Sales.year_of_release = Games.year_of_release
+)
+WHERE rnk < 3;
+
+--Identify the first game by each publisher to reach 1 million in global sales(row_number)
+SELECT publisher, game_name, platform, year_of_release
+FROM
+(
+	SELECT publisher, game_name, platform, year_of_release, 
+		ROW_NUMBER() OVER(PARTITION BY publisher) AS rn
+	FROM
+	(
+		SELECT publisher, Games.game_name, Games.platform, Games.year_of_release, global_sales 
+		FROM Sales
+		JOIN Games
+		ON Sales.game_name = Games.game_name
+		AND Sales.platform = Games.platform
+		AND Sales.year_of_release = Games.year_of_release
+		WHERE global_sales >= 1
+		ORDER BY publisher, year_of_release
+	)
+)
+WHERE rn = 1;
