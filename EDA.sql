@@ -1,30 +1,3 @@
-/*
--Which are the games that sold the best in every part of the world?
--Is there a difference between the prefferences of genre from one region to another? 
-	How about rating?
--Which publihser had the best sales in each region?
--Which developer had the best sales in each region?
--Which region has the most sales?
--Which is the most succesful year for the video game industry?
--What's the time period of the data and how far is it from today?
--What are the sales of every platform in each of the years that they had games in?
--Calculate the year_over_year sales growth for each paltform
--Rank games by their sales within each release year(rank)
--Calculate the trailing 3-year average sales for all the developers released a game in the most
-	recent year(lag)
--Identify publishers with consistently increasing or decreasing sales over the years(lag and lead)
--Rank each platform by total global sales(rank)
--Are there platform prefferences when it comes to geographical allocation? If so, which platform 
-	supported the most sales in which region?
--What is the top 3 best selling games for each platform?(Row_number)
--Which developer has the best Sales/volume ratio?
--Which publisher has the best sale/volume ratio?
--Identify the first game by each publisher to reach 1 million in global sales(row_number)
-*/
---What is the game that has the most versions?
---Do ratings geared towards a younger demographic sell more?
---Rank games within each genre based on their sales in North America(rank or dense_rank)
-
 CREATE VIEW categorical_counts
 AS
 SELECT COUNT(*) AS Total, COUNT(DISTINCT(Sales.game_name)) AS game_names, 
@@ -435,3 +408,31 @@ FROM
 	)
 )
 WHERE rn = 1;
+
+--What is the game that has the most versions?
+SELECT game_name, COUNT(*) AS version_num FROM Games
+GROUP BY game_name
+ORDER BY version_num DESC
+LIMIT 1;
+
+--Rank games within each genre based on their sales in North America(rank or dense_rank)
+SELECT genre, game_name, platform, year_of_release, rnk FROM
+(
+	SELECT genre, Games.game_name, Games.platform, Games.year_of_release, 
+		DENSE_RANK() OVER(PARTITION BY genre ORDER BY na_sales DESC) AS rnk FROM Games
+	JOIN Sales
+	ON Sales.game_name = Games.game_name
+	AND Sales.platform = Games.platform
+	AND Sales.year_of_release = Games.year_of_release
+	ORDER BY genre, na_sales DESC
+)
+WHERE rnk <= 3;
+
+--Do ratings geared towards a younger demographic sell more?
+SELECT rating, SUM(global_sales) AS total_sales FROM Games
+JOIN Sales
+ON Games.game_name = Sales.game_name
+AND Games.platform = Sales.platform
+AND Games.year_of_release = Sales.year_of_release
+GROUP BY rating
+ORDER BY total_sales DESC;
