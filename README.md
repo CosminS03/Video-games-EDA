@@ -14,4 +14,4 @@ Recommendation: To prevent potential issues, it's recommended to execute the scr
 
 After the dataset is imported into PostrgreSQL, every column is checked for null values. Where there's no reliable way to infer the missing values, the tuples that contain them will be deleted.
 While the game_name column had only two instances of missing values, it can be observed that there are tuples with additional information in the game_name column which indicate inconsistencies in the data.
-![Image Description](C:\Users\spanu\OneDrive\Pictures\Screenshots\name_irreg.png)
+![Example](images/name_irreg.png)
