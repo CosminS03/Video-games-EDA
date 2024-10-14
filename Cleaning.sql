@@ -1,4 +1,4 @@
---IMPORTING THE DATASET
+	--IMPORTING THE DATASET
 CREATE TABLE Video_Games
 (
 	Game_Name TEXT,
@@ -59,7 +59,14 @@ SELECT Game_Name, Platform, Year_of_release::INT, Genre, Publisher, NA_sales::DE
 FROM Video_Games_Staging;
 
 DROP TABLE Video_Games_Staging;
-
+------------------------------------
+SELECT * FROM Video_Games
+WHERE game_name LIKE '%eekly%'
+OR game_name LIKE '%(old%'
+OR game_name LIKE '%(Old%'
+OR game_name LIKE '%(_ll _egion_%'
+OR RIGHT(game_name, 6) = 'sales)';
+------------------------------------
 --CLEANING THE DATA
 SELECT * FROM Video_Games
 WHERE game_name IS NULL;
