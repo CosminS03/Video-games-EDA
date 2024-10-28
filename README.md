@@ -15,3 +15,22 @@ Recommendation: To prevent potential issues, it's recommended to execute the scr
 After the dataset is imported into PostrgreSQL, every column is checked for null values. Where there's no reliable way to infer the missing values, the tuples that contain them will be deleted.
 While the game_name column had only two instances of missing values, it can be observed that there are tuples with additional information in the game_name column which indicate inconsistencies in the data.
 ![Example](images/name_irreg.png)
+The tuples with weekly sales, old sales or ones that depict only sales from a certain region for a game that has a separate row
+for all of its sales will be deleted, while the ones with "All regions" in the game_name column will be updated to remove the explanation.
+The rows that show sales of the same game but only for a certain region, as shown in the photo below, will be added up into one tuple.
+![Example](images/Divided_sales.png)
+After adding these tuples, some duplicate rows will be generated. These rows will be deleted along with the ones that show the sales of a game from a certain region but have no complementary tuples.
+
+To address missing values in other key columns, the following approaches were used:
+*Cross-referencing platforms: Missing data on release year, developer, and rating were filled by referencing the same game on other platforms.
+*Extracting from other columns: Some release years were parsed from the game title column.
+*Series inference: For games that are part of a series, alphabetical sorting allowed identification of consecutive entries, with missing developer and rating values being inferred from adjacent titles. Missing release years for games in a series were filled by averaging the years of neighboring games.
+*Platform-based averages: Missing release years were replaced with the average release year of the respective platform.
+*Dropping columns: Columns with substantial missing data (critic_score, critic_count, user_score, user_count) and limited analytical value were removed.
+*Dropping rows: Rows with missing values that couldn't have been inferred were deleted.
+
+Upon visual inspection, it can be observed that some game names still contain additional information in parentheses.
+![Remaining names](images/Remaining_names.png) 
+These will be updated to remove the extra details, except for 'Dance Dance Revolution' and 'World Soccer Winning Eleven 7 International', which have region-specific versions and will retain the additional info.
+Also through visual inspection, an outlier was spotted(there is only one game released in 2020 while the second most recent year is 2017) and it was discovered that some games have "unknown" publishers which will be deleted.
+![Outlier](images/2020.png)  

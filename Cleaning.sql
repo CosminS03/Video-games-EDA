@@ -1,4 +1,4 @@
-	--IMPORTING THE DATASET
+--IMPORTING THE DATASET
 CREATE TABLE Video_Games
 (
 	Game_Name TEXT,
@@ -61,11 +61,11 @@ FROM Video_Games_Staging;
 DROP TABLE Video_Games_Staging;
 ------------------------------------
 SELECT * FROM Video_Games
-WHERE game_name LIKE '%eekly%'
-OR game_name LIKE '%(old%'
-OR game_name LIKE '%(Old%'
-OR game_name LIKE '%(_ll _egion_%'
-OR RIGHT(game_name, 6) = 'sales)';
+WHERE RIGHT(game_name, 5) = 'ales)'
+ORDER BY global_sales DESC;
+
+SELECT * FROM Video_Games
+WHERE game_name LIKE '%(%';
 ------------------------------------
 --CLEANING THE DATA
 SELECT * FROM Video_Games
