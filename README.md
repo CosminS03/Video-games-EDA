@@ -33,4 +33,15 @@ Upon visual inspection, it can be observed that some game names still contain ad
 ![Remaining names](images/Remaining_names.png) 
 These will be updated to remove the extra details, except for 'Dance Dance Revolution' and 'World Soccer Winning Eleven 7 International', which have region-specific versions and will retain the additional info.
 Also through visual inspection, an outlier was spotted(there is only one game released in 2020 while the second most recent year is 2017) and it was discovered that some games have "unknown" publishers which will be deleted.
-![Outlier](images/2020.png)  
+![Outlier](images/2020.png) 
+
+### Normalization
+![Initial database](images/diagram1.png)
+This is the initial form of the database which is not in 1NF because the developer column has cells that depict multiple developers in a single row.
+![Multiple developers example](images/Multiple_devs.png)
+To bring the database into the first normal form another table was created containing the game_name, platform and developer columns where each row has only one developer.
+![4NF database](images/diagram2.png)
+After this separation the database is in 4NF due to there being no partial, transitive or multivalued dependencies. To bring the database into 5NF, the video_games table will be split into two tables: Games and Sales. The Sales table will contain the game_name, platform and year_of_release columns which represent the primary key and the variables depicting the sales in different regions, while the Games table will contain the same primary key and the columns that depict certain attributes of games.
+![5NF database](images/5NF.png)
+In order to link the all of the tables together the game_version_id column was added to serve as the primary key for the Sales table and foreign key for the Developers table.
+![Fully normalized database](images/Finished_diagram.png)

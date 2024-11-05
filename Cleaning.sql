@@ -60,12 +60,8 @@ FROM Video_Games_Staging;
 
 DROP TABLE Video_Games_Staging;
 ------------------------------------
-SELECT * FROM Video_Games
-WHERE RIGHT(game_name, 5) = 'ales)'
-ORDER BY global_sales DESC;
-
-SELECT * FROM Video_Games
-WHERE game_name LIKE '%(%';
+SELECT developer FROM Video_Games
+WHERE developer LIKE '%,%,%';
 ------------------------------------
 --CLEANING THE DATA
 SELECT * FROM Video_Games
