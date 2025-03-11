@@ -38,10 +38,52 @@ Also through visual inspection, an outlier was spotted(there is only one game re
 ### Normalization
 ![Initial database](images/diagram1.png)
 This is the initial form of the database which is not in 1NF because the developer column has cells that depict multiple developers in a single row.
+
 ![Multiple developers example](images/Multiple_devs.png)
+
 To bring the database into the first normal form another table was created containing the game_name, platform and developer columns where each row has only one developer.
 ![4NF database](images/diagram2.png)
 After this separation the database is in 4NF due to there being no partial, transitive or multivalued dependencies. To bring the database into 5NF, the video_games table will be split into two tables: Games and Sales. The Sales table will contain the game_name, platform and year_of_release columns which represent the primary key and the variables depicting the sales in different regions, while the Games table will contain the same primary key and the columns that depict certain attributes of games.
 ![5NF database](images/5NF.png)
 In order to link the all of the tables together the game_version_id column was added to serve as the primary key for the Sales table and foreign key for the Developers table.
 ![Fully normalized database](images/Finished_diagram.png)
+
+### Exploratory Data Analysis
+The analysis starts by creating views of general statistics such as the number of entries and the most common value for the categorical variables and metrics such as mean, median, mode, standard deviation, quartiles and the range of the values for the numeric variables. These views were created in order to easily access theses values whenever when needed.
+From this point on, the analysis will take the form of questions and answers and will be divided into 4 sections:
+* Region-based analysis
+* Time-based analysis
+* Platform analysis
+* Publishers analysis
+
+#### Region-based analysis
+Q: What is the best-selling game for each region?
+
+A: When it comes to sells, it seems that Wii Sports is the best video game globally, being the most succesful in both North America and Europe. However, in it's home region it has not acquired that title since the games with the most sales in Japan are Pokemon Red and Pokemon Blue, which are considered to be the same game. In the rest of the globe, GTA: San Andreas has seen the most sales.
+
+
+Q: Is there a difference in the preferences of genre from one region to another?
+
+A: Yes, but only when it comes to Japan. While the Action, Sports and Shooter genres are the ones who sold the most in North America, Europe and the Other countries, Japan seems to prefer the Role-Playing genre the most, Action coming in second and Platformers being a close third.
+
+
+Q: Which publisher had the best sales in each region?
+
+A: Nintendo dominates over the North American, European and Japanese markets, while the publisher with the most sells in the "Other" category is EA(Electronic Arts).
+
+
+Q: Which developer had the best sales in each region?
+
+A: Nintendo is the developer who has managed to sell the most games in each part of the world.
+
+
+Q: Is there a difference in preferences of platforms from one region to another?
+
+A: Yes, in North America, the platform hosting the games with the most sales is the Xbox 360, in Japan the Nintendo DS, while Europe and the "Other" category prefer the PlayStation 2.
+
+
+Q: Which region has the most sales?
+
+A: North America is the region with the biggest amount of units sold, Europe being the second and Japan the third.
+
+#### Time-based analysis
