@@ -66,3 +66,4 @@ The most successful year for the video game industry in the dataset was 2008, wi
 Based on the provided data, the PS2 emerged as the top platform by global sales. The three best-selling games for this platform were Grand Theft Auto: San Andreas, Grand Theft Auto: Vice City and Gran Turismo 3: A-Spec.
 
 ### Publishers analysis
+According to this dataset, Nintendo stands out with the highest sale/volume ratio of 3.11. The top two best-selling games for the company are Wii Sports and Super Mario Bros. (for the Nintendo Entertainment System), while Donkey Kong was the first Nintendo-published game to reach 1 million dollars in global sales in 1981 on the Game Boy.
