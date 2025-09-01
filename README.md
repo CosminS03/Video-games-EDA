@@ -61,3 +61,8 @@ According to the analysis, North America and Europe prefer Action, Sports, and S
 
 #### Time-based analysis
 The most successful year for the video game industry in the dataset was 2008, with a recorded total of $613.83 million in sales. The data covers a period from 1980 to 2017. The platform with the highest year-over-year sales growth was the Wii, which saw an impressive 137.01% growth in 2006, largely due to the success of Wii Sports. However, it also experienced the lowest growth in 2010. Among developers, EA Sports had the highest trailing 3-year average sales with $23.19 million.
+
+### Platform analysis
+Based on the provided data, the PS2 emerged as the top platform by global sales. The three best-selling games for this platform were Grand Theft Auto: San Andreas, Grand Theft Auto: Vice City and Gran Turismo 3: A-Spec.
+
+### Publishers analysis
