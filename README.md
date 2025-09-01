@@ -57,33 +57,6 @@ From this point on, the analysis will take the form of questions and answers and
 * Publishers analysis
 
 #### Region-based analysis
-Q: What is the best-selling game for each region?
-
-A: When it comes to sells, it seems that Wii Sports is the best video game globally, being the most succesful in both North America and Europe. However, in it's home region it has not acquired that title since the games with the most sales in Japan are Pokemon Red and Pokemon Blue, which are considered to be the same game. In the rest of the globe, GTA: San Andreas has seen the most sales.
-
-
-Q: Is there a difference in the preferences of genre from one region to another?
-
-A: Yes, but only when it comes to Japan. While the Action, Sports and Shooter genres are the ones who sold the most in North America, Europe and the Other countries, Japan seems to prefer the Role-Playing genre the most, Action coming in second and Platformers being a close third.
-
-
-Q: Which publisher had the best sales in each region?
-
-A: Nintendo dominates over the North American, European and Japanese markets, while the publisher with the most sells in the "Other" category is EA(Electronic Arts).
-
-
-Q: Which developer had the best sales in each region?
-
-A: Nintendo is the developer who has managed to sell the most games in each part of the world.
-
-
-Q: Is there a difference in preferences of platforms from one region to another?
-
-A: Yes, in North America, the platform hosting the games with the most sales is the Xbox 360, in Japan the Nintendo DS, while Europe and the "Other" category prefer the PlayStation 2.
-
-
-Q: Which region has the most sales?
-
-A: North America is the region with the biggest amount of units sold, Europe being the second and Japan the third.
+According to the analysis, North America and Europe prefer Action, Sports, and Shooter genres, with Wii Sports being the top-selling game and Nintendo leading in both publishing and development. Japan, however, favors Role-Playing games, with Pokémon Red/Blue as the top-seller and Nintendo as the top publisher and developer. The "Other" regions lean towards Action, Sports, and Shooter games, with GTA: San Andreas as the best-seller, EA as the top publisher, and Nintendo as the top developer. Overall, North America has the highest total sales.
 
 #### Time-based analysis
